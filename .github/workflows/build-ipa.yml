@@ -1,0 +1,39 @@
+name: build-ipa
+on:
+  workflow_dispatch:
+  push:
+    branches: [ master ]
+jobs:
+  build:
+    runs-on: xcode-27
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - name: 环境
+        run: |
+          xcodebuild -version
+          ls
+      - name: 看工程结构
+        run: |
+          xcodebuild -list -project Example/Example.xcodeproj || true
+      - name: 编译
+        run: |
+          set -euo pipefail
+          xcodebuild -project Example/Example.xcodeproj -target Example \
+            -configuration Release -sdk iphoneos -arch arm64 \
+            -destination "generic/platform=iOS" \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            CONFIGURATION_BUILD_DIR="$PWD/build" build
+      - name: 打包
+        run: |
+          set -euo pipefail
+          APP=$(find build -maxdepth 2 -name "*.app" | head -1)
+          echo "app=$APP"
+          mkdir -p Payload && cp -R "$APP" Payload/
+          zip -qry FilterCamExample-unsigned.ipa Payload
+          ls -lh FilterCamExample-unsigned.ipa
+      - uses: actions/upload-artifact@v4
+        with:
+          name: FilterCam-ipa
+          path: FilterCamExample-unsigned.ipa
+          if-no-files-found: error
