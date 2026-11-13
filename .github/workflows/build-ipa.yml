@@ -9,19 +9,13 @@ jobs:
     timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
-      - name: 环境
-        run: |
-          xcodebuild -version
-          ls
-      - name: 看工程结构
-        run: |
-          xcodebuild -list -project Example/Example.xcodeproj || true
       - name: 编译
         run: |
           set -euo pipefail
           xcodebuild -project Example/Example.xcodeproj -target Example \
             -configuration Release -sdk iphoneos -arch arm64 \
             -destination "generic/platform=iOS" \
+            IPHONEOS_DEPLOYMENT_TARGET=15.0 \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
             CONFIGURATION_BUILD_DIR="$PWD/build" build
       - name: 打包
